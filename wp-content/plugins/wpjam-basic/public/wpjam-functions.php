@@ -54,56 +54,6 @@ function wpjam_get_option($option_name){
 	return $option;
 }
 
-function wpjam_validate_post($post_id, $post_type='', $action=''){
-	return WPJAM_PostType::validate($post_id, $post_type, $action);
-}
-
-function wpjam_get_post($post_id, $args=[]){
-	return WPJAM_PostType::parse_for_json($post_id, $args);
-}
-
-function wpjam_get_posts($post_ids, $args=[]){
-	if(class_exists('WPJAM_PostType')){
-		return WPJAM_PostType::get_posts($post_ids, $args);
-	}else{
-		return [];
-	}
-}
-
-function wpjam_get_post_views($post_id, $type='views'){
-	return WPJAM_PostType::get_views($post_id, $type);
-}
-
-function wpjam_update_post_views($post_id, $type='views'){
-	return WPJAM_PostType::update_views($post_id, $type);
-}
-
-function wpjam_get_post_excerpt($post=null, $excerpt_length=240){
-	return WPJAM_PostType::get_excerpt($post, $excerpt_length);
-}
-	
-if(!function_exists('get_post_excerpt')){   
-	//获取日志摘要
-	function get_post_excerpt($post=null, $excerpt_length=240){
-		return WPJAM_PostType::get_excerpt($post, $excerpt_length);
-	}
-}
-
-function wpjam_get_term($term, $taxonomy, $children_terms=[], $max_depth=-1, $depth=0){
-	return WPJAM_Taxonomy::get_term($term, $taxonomy, $children_terms, $max_depth, $depth);
-}
-
-/**
- * $max_depth = -1 means flatly display every element.
- * $max_depth = 0 means display all levels.
- * $max_depth > 0 specifies the number of display levels.
- *
- */
-function wpjam_get_terms($args, $max_depth=-1){
-	return WPJAM_Taxonomy::get_terms($args, $max_depth);
-}
-
-
 
 function wpjam_parse_fields_setting($fields, $sub=0){
 	return WPJAM_Field::parse_fields_setting($fields, $sub);
@@ -122,10 +72,7 @@ function wpjam_get_post_type_setting($post_type){
 	return $settings[$post_type] ?? [];
 }
 
-// WP_Query 缓存
-function wpjam_query($args=[], $cache_time='600'){
-	return WPJAM_Cache::query($args, $cache_time);
-}
+
 
 
 

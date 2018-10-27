@@ -2,7 +2,7 @@
 class WPJAM_PostType{
 	protected static $field_post_ids_list;
 
-	public static function get_posts($post_ids, $args=array()){
+	public static function get_posts($post_ids, $args=[]){
 		if($post_ids){
 			$post_ids 	= array_filter($post_ids);
 			$post_ids 	= array_unique($post_ids);
@@ -66,6 +66,10 @@ class WPJAM_PostType{
 		$post_json['status']	= $post->post_status;
 		$post_json['title']		= '';
 
+		if(is_post_type_viewable($post_type)){
+			$post_json['name']		= $post->post_name;
+			$post_json['post_url']	= str_replace(home_url(), '', get_permalink($post_id));
+		}
 
 		if(post_type_supports($post_type, 'title')){
 			$post_json['title']		= html_entity_decode(get_the_title($post));
@@ -284,20 +288,50 @@ class WPJAM_PostType{
 		}
 	}
 
-	public static function related_query($post_id=null, $number=5){
-		$the_post	= get_post($post_id);
+	public static function get_excerpt($post=null, $excerpt_length=240){
+		$the_post = get_post($post);
+		if(empty($the_post)) return '';
+
+		$post_excerpt = $the_post->post_excerpt;
+		if($post_excerpt == ''){
+			$post_content   = strip_shortcodes($the_post->post_content);
+			$post_content   = wp_strip_all_tags( $post_content );
+			$excerpt_length = apply_filters('excerpt_length', $excerpt_length);	 
+			$excerpt_more   = apply_filters('excerpt_more', ' ' . '...');
+			$post_excerpt   = wpjam_get_first_p($post_content); // 获取第一段
+			if(mb_strwidth($post_excerpt) < $excerpt_length*1/3 || mb_strwidth($post_excerpt) > $excerpt_length){ // 如果第一段太短或者太长，就获取内容的前 $excerpt_length 字
+				$post_excerpt = mb_strimwidth($post_content,0,$excerpt_length,$excerpt_more,'utf-8');
+			}
+		}else{
+			$post_excerpt = wp_strip_all_tags( $post_excerpt );	
+		}
+		
+		$post_excerpt = trim( preg_replace( "/[\n\r\t ]+/", ' ', $post_excerpt ), ' ' );
+
+		return $post_excerpt;
+	}
+
+	public static function related_query($number=5, $post_type=null){
+		$the_post	= get_post();
 
 		if(empty($the_post)){
 			return false;
 		}
 
-		$related_query = wp_cache_get($the_post->ID,'related_posts_query');
+		$post_id		= $the_post->ID;
+		$post_type		= $post_type ?: $the_post->post_type;
+		$number			= $number ?: 5;
+
+		$last_changed	= wp_cache_get_last_changed('posts');
+		$cache_key		= $post_id.':'.maybe_serialize($post_type).':'.$number.':'.$last_changed;
+
+		$related_query = wp_cache_get($cache_key, 'related_posts_query');
 		if( $related_query === false) {
 
 			$term_taxonomy_ids = [];
 			if($taxonomies = get_object_taxonomies($the_post->post_type)){
 				foreach ($taxonomies as $taxonomy) {
-					if($terms	= get_the_terms($the_post->ID, $taxonomy)){
+					if($terms	= get_the_terms($post_id, $taxonomy)){
 						$term_taxonomy_ids = array_merge($term_taxonomy_ids, array_column($terms, 'term_taxonomy_id'));
 					}
 
@@ -351,22 +385,28 @@ class WPJAM_PostType{
 			}
 
 			$related_query = new WP_Query(array(
-				'post_type'		=>apply_filters('wpjam_related_posts_post_types',array($the_post->post_type)),
-				'no_found_rows'	=>true,
-				'posts_per_page'=>$number,
-				'related_query'	=>true,
-				'related_to_id'	=>$post_id
+				'post_type'			=> $post_type,
+				'no_found_rows'		=> true,
+				'posts_per_page'	=> $number,
+				'related_query'		=> true,
+				'related_to_id'		=> $post_id,
+				'post__not_in'		=> [$post_id]
 			));
 
-			wp_cache_set($the_post->ID, $related_query, 'related_posts_query', HOUR_IN_SECONDS*10);
+			wp_cache_set($cache_key, $related_query, 'related_posts_query', HOUR_IN_SECONDS*10);
 		}
+
 		return $related_query;
 	}
 
 	public static function get_related($post_id=null, $args=[]){
-		$args = wp_parse_args($args, array(
-			'related_number'	=> 5,
-			'thumbnail_size'	=> ['width'=>200, 'height'=>200]
+		$args	= apply_filters('wpjam_related_posts_args', $args);
+		$args	= wp_parse_args($args, array(
+			'number'	=> 5,
+			'thumb'		=> true,
+			'excerpt'	=> true,
+			'size'		=> ['width'=>100, 'height'=>100],
+			'post_type'	=> null
 		));
 
 		extract($args);
@@ -377,38 +417,29 @@ class WPJAM_PostType{
 
 		$related_json	= [];
 
-		$related_query	= self::related_query($post_id, $related_number+1);
+		$related_query	= self::related_query($number, $post_type);
 
 		if($related_query->have_posts()){
-			$i = 0;
-
 			foreach ($related_query->posts as $related_post) {
-
-				if($related_post->ID == $post_id){
-					continue;
-				}
-
-				if($i >= $related_number){
-					break;
-				}
-
-				$i++;
-
 				$post_json	= [];
 
 				$post_json['id']		= (int)$related_post->ID;
 				$post_json['timestamp']	= (int)strtotime(get_gmt_from_date($related_post->post_date));
 				$post_json['time']		= wpjam_human_time_diff($post_json['timestamp']);
 				
-				$post_json['title']		= html_entity_decode(get_the_title($related_post));;
-				$post_json['excerpt']	= wp_strip_all_tags(apply_filters('the_excerpt', get_the_excerpt($related_post)));
+				$post_json['title']		= html_entity_decode(get_the_title($related_post));
 
-				if(post_type_supports($related_post->post_type, 'thumbnail')){
-					if($post_thumbnail_id = get_post_thumbnail_id($related_post->ID)){
-						$post_json['thumbnail']	= wpjam_get_thumbnail(wp_get_attachment_url($post_thumbnail_id), $thumbnail_size);
-					}else{
-						$post_json['thumbnail']	= '';
-					}	
+				if(is_post_type_viewable($related_post->post_type)){
+					$post_json['name']		= $the_post->post_name;
+					$post_json['post_url']	= str_replace(home_url(), '', get_permalink($post_id));
+				}
+
+				if($excerpt){
+					$post_json['excerpt']	= wp_strip_all_tags(apply_filters('the_excerpt', get_the_excerpt($related_post)));
+				}
+
+				if($thumb){
+					$post_json['thumbnail']	= wpjam_get_post_thumbnail_url($related_post->ID, $size, $crop=true, 2);
 				}
 
 				$related_json[]	= apply_filters('wpjam_related_post_json', $post_json, $related_post->ID, $args);
@@ -418,28 +449,76 @@ class WPJAM_PostType{
 		return $related_json;
 	}
 
-	public static function get_excerpt($post=null, $excerpt_length=240){
-		$the_post = get_post($post);
-		if(empty($the_post)) return '';
-
-		$post_excerpt = $the_post->post_excerpt;
-		if($post_excerpt == ''){
-			$post_content   = strip_shortcodes($the_post->post_content);
-			//$post_content = apply_filters('the_content',$post_content);
-			$post_content   = wp_strip_all_tags( $post_content );
-			$excerpt_length = apply_filters('excerpt_length', $excerpt_length);	 
-			$excerpt_more   = apply_filters('excerpt_more', ' ' . '...');
-			$post_excerpt   = wpjam_get_first_p($post_content); // 获取第一段
-			if(mb_strwidth($post_excerpt) < $excerpt_length*1/3 || mb_strwidth($post_excerpt) > $excerpt_length){ // 如果第一段太短或者太长，就获取内容的前 $excerpt_length 字
-				$post_excerpt = mb_strimwidth($post_content,0,$excerpt_length,$excerpt_more,'utf-8');
-			}
-		}else{
-			$post_excerpt = wp_strip_all_tags( $post_excerpt );	
+	public static function parse_post_list($wpjam_query, $args=[]){
+		if(!$wpjam_query){
+			return false;
 		}
-		
-		$post_excerpt = trim( preg_replace( "/[\n\r\t ]+/", ' ', $post_excerpt ), ' ' );
+		extract(wp_parse_args($args, array(
+			'title'			=> '',
+			'div_id'		=> '',
+			'class'			=> '', 
+			'thumb'			=> true,	
+			'excerpt'		=> false, 
+			'size'			=> 'thumbnail', 
+			'crop'			=> true, 
+			'thumb_class'	=> 'wp-post-image'
+		)));
 
-		return $post_excerpt;
+		if($thumb)	{
+			$class	= $class.' has-thumb';
+		}
+
+		if($class){
+			$class	= ' class="'.$class.'"';	
+		}
+
+		if(is_singular()){
+			$post_id	= get_the_ID();
+		}
+
+		$output = '';
+		$i = 0;
+
+		if($wpjam_query->have_posts()){
+			while($wpjam_query->have_posts()){
+				$wpjam_query->the_post();
+
+				$li = '';
+
+				if($thumb || $excerpt){
+					if($thumb){
+						$li .=	wpjam_get_post_thumbnail(null, $size, $crop, $thumb_class)."\n";
+					}
+
+					$li .=	'<h4>'.get_the_title().'</h4>';
+
+					if($excerpt){
+						$li .= '<p>'.get_the_excerpt().'</p>';
+					}
+				}else{
+					$li .= get_the_title();
+				}
+
+				if(!is_singular() || (is_singular() && $post_id != get_the_ID())) {
+					$li =	'<a href="'.get_permalink().'" title="'.the_title_attribute(['echo'=>false]).'">'.$li.'</a>';
+				}
+
+				$output .=	'<li>'.$li.'</li>'."\n";
+			}
+
+			$output = '<ul '.$class.'>'."\n".$output.'</ul>'."\n";
+
+			if($title){
+				$output	= '<h3>'.$title.'</h3>'."\n".$output;
+			}
+
+			if($div_id){
+				$output	= '<div id="'.$div_id.'">'."\n".$output.'</div>'."\n";
+			}
+		}
+
+		wp_reset_postdata();
+		return $output;	
 	}
 }
 
@@ -458,7 +537,3 @@ add_filter('the_posts', function($posts, $wp_query){
 
 	return $posts;
 }, 10, 2);
-
-add_action('save_post',function($post_id){
-	wp_cache_delete($post_id,'related_posts_query');
-});

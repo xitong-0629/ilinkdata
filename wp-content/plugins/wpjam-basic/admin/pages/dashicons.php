@@ -4,6 +4,8 @@ function wpjam_dashicons_page(){
 	?>
 	<h1>Dashicons</h1>
 
+	<p>在 WordPress 后台<a href="https://blog.wpjam.com/m/using-dashicons-in-wordpress-admin/">如何使用 Dashicons</a>。</p>
+
 	<style type="text/css">
 	h2{
 		max-width: 800px;

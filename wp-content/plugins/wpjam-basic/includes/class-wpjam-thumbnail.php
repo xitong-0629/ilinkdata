@@ -61,6 +61,9 @@ class WPJAM_Thumbnail{
 		if(!$post_content || is_object($post_content)){
 			$the_post		= get_post($post_content);
 			$post_content	= $the_post->post_content;
+			$post_id		= $the_post->ID;
+		}else{
+			$post_id		= 0;
 		}
 
 		preg_match_all( '/class=[\'"].*?wp-image-([\d]*)[\'"]/i', $post_content, $matches );
@@ -73,8 +76,8 @@ class WPJAM_Thumbnail{
 		if( $matches && isset($matches[1]) && isset($matches[1][0]) ){	   
 			$thumbnail_url	= $matches[1][0];
 
-			if(strpos($thumbnail_url, CDN_HOST) === false){
-				$thumbnail_url = self::get_content_remote_img_url($thumbnail_url);
+			if(strpos($thumbnail_url, CDN_HOST) === false && strpos($thumbnail_url, LOCAL_HOST) === false){
+				$thumbnail_url = self::get_content_remote_img_url($thumbnail_url, $post_id);
 			}
 
 			return $thumbnail_url;
@@ -162,7 +165,7 @@ class WPJAM_Thumbnail{
 				return $img_tag;
 			}
 
-			if(strpos($img_url, CDN_HOST) === false){
+			if(strpos($img_url, CDN_HOST) === false && strpos($img_url, LOCAL_HOST) === false){
 				if(!self::can_remote_image($img_url)){
 					return $img_tag;
 				}else{

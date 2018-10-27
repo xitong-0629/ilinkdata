@@ -28,40 +28,37 @@ add_filter('wpjam_basic_setting', function(){
 	return compact('sections');
 });
 
-function wpjam_smtp_send_page(){
-	global $current_admin_url;
+function wpjam_smtp_ajax_response(){
+	$action	= $_POST['page_action'];
+	$data	= wp_parse_args($_POST['data']);
 
-	$form_fields = array(
-		'to'		=> array('title'=>'收件人',	'type'=>'email'),
-		'subject'	=> array('title'=>'主题',	'type'=>'text'),
-		'message'	=> array('title'=>'内容',	'type'=>'textarea',	'style'=>'max-width:640px;',	'rows'=>8),
-	);
+	if($action == 'submit'){
+		$to			= $data['to']?:'';
+		$subject	= $data['subject']?:'';
+		$message	= $data['message']?:'';
 
-	$nonce_action = 'send_mail';
-
-	if( $_SERVER['REQUEST_METHOD'] == 'POST' ){
-		$data	= wpjam_get_form_post($form_fields, $nonce_action);
-		foreach ($form_fields as $key => $form_field) {
-			$form_fields[$key]['value']	= $data[$key];
-		}
-
-		extract($data);
-		
 		if(wp_mail($to, $subject, $message)){
-			wpjam_admin_add_error('发送成功');
-		}else{
-			wpjam_admin_add_error('发送失败','error');
+			wpjam_send_json(['errcode'=>0]);
 		}
 	}
-	?>
+}
 
-	<h2>发送测试</h2>
+function wpjam_smtp_send_page(){
+	echo '<h2>发送测试</h2>';
 
-	<?php wpjam_form($form_fields, $current_admin_url, $nonce_action, '发送'); ?>
-	<?php
+	$fields = array(
+		'to'		=> array('title'=>'收件人',	'type'=>'email',	'required'),
+		'subject'	=> array('title'=>'主题',	'type'=>'text',		'required'),
+		'message'	=> array('title'=>'内容',	'type'=>'textarea',	'style'=>'max-width:640px;',	'rows'=>8,	'required'),
+	);
+
+	wpjam_ajax_form([
+		'fields'		=> $fields, 
+		'action'		=> 'submit', 
+		'submit_text'	=> '发送'
+	]);
 }
 
 add_action('wp_mail_failed', function ($mail_failed){
-	trigger_error($mail_failed->get_error_code().$mail_failed->get_error_message());
-	var_dump($mail_failed);
+	wpjam_send_json($mail_failed);
 });

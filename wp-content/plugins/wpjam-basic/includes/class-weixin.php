@@ -1,6 +1,5 @@
 <?php
 // wp_cache_add_global_groups(array('weixin'));
-
 class WEIXIN{
 	private $appid;
 	private $secret;
@@ -137,7 +136,7 @@ class WEIXIN{
 		wp_cache_delete('weixin_user_tags', $this->appid);
 
 		if(is_string($openid_list)){	// 单个 openid 情况也支持，我牛逼吧
-			$openid_list = array($openid_list);
+			$openid_list = [$openid_list];
 		}
 
 		return $this->http_request('https://api.weixin.qq.com/cgi-bin/tags/members/batchtagging', array(
@@ -150,7 +149,7 @@ class WEIXIN{
 		wp_cache_delete('weixin_user_tags', $this->appid);
 
 		if(is_string($openid_list)){
-			$openid_list = array($openid_list);
+			$openid_list = [$openid_list];
 		}
 
 		return $this->http_request('https://api.weixin.qq.com/cgi-bin/tags/members/batchuntagging', array(
@@ -160,19 +159,80 @@ class WEIXIN{
 	}
 
 	public function get_tag_users($tagid, $next_openid=''){
-		$tag_users	= wp_cache_get($tagid, 'weixin_'. $this->appid.'_tag_users');
-		if($tag_users === false){
+		if(empty($next_openid)){
+			$tag_users	= wp_cache_get($tagid, 'weixin_'. $this->appid.'_tag_users');
+		}
+
+		if($next_openid || $tag_users === false){
 			$tag_users	= $this->http_request('https://api.weixin.qq.com/cgi-bin/user/tag/get', array(
 				'method'	=> 'POST',
 				'body'		=> compact('tagid', 'next_openid'),
 			));
 
-			if($next_openid == ''){
+			if(empty($next_openid)){
 				wp_cache_set($tagid, $tag_users, 'weixin_'. $this->appid.'_tag_users', MINUTE_IN_SECONDS);
 			}
 		}
 
 		return $tag_users;
+	}
+
+	public function get_blacklist($next_openid=''){
+		if(empty($next_openid)){
+			$blacklist	= wp_cache_get('blacklist', 'weixin_'. $this->appid);
+		}
+
+		if($next_openid || $blacklist === false){
+			$response	= $this->http_request('https://api.weixin.qq.com/cgi-bin/tags/members/getblacklist', array(
+				'method'	=> 'POST',
+				'body'		=> compact('next_openid'),
+			));
+
+			if(is_wp_error($response)){
+				return $response;
+			}
+
+			$blacklist	= $response['data']['openid'];
+			$total		= $response['total'];
+			$count		= $response['count'];
+
+			if($total > $count){
+				$next_openid	= $response['next_openid'];
+				// 继续获取，以后再写，谁TM有一万个黑名单用户的时候，我一定帮他写。
+			}
+
+			if($next_openid == ''){
+				wp_cache_set('blacklist', $blacklist, 'weixin_'. $this->appid, HOUR_IN_SECONDS);
+			}
+		}
+
+		return $blacklist;
+	}
+
+	public function batch_blacklist($openid_list){
+		wp_cache_delete('blacklist', 'weixin_'. $this->appid);
+
+		if(is_string($openid_list)){
+			$openid_list = [$openid_list];
+		}
+
+		return $this->http_request('https://api.weixin.qq.com/cgi-bin/tags/members/batchblacklist', array(
+			'method'	=> 'POST',
+			'body'		=> compact('openid_list'),
+		));
+	}
+
+	public function batch_unblacklist($openid_list){
+		wp_cache_delete('blacklist', 'weixin_'. $this->appid);
+
+		if(is_string($openid_list)){
+			$openid_list = [$openid_list];
+		}
+
+		return $this->http_request('https://api.weixin.qq.com/cgi-bin/tags/members/batchunblacklist', array(
+			'method'	=> 'POST',
+			'body'		=> compact('openid_list'),
+		));
 	}
 
 	// 获取主菜单
@@ -484,18 +544,27 @@ class WEIXIN{
 		));
 	}
 
-	public function send_template_message($touser, $template_id, $data, $url='', $topcolor='#FF0000'){
-		$data['touser']		= $touser;
-		$data['template_id']= $template_id;
-		$data['data']		= $data;
+	public function send_template_message($data=[]){
 
-		if($url){
-			$data['url']	= $url;
-		}
+		$data	= wp_parse_args($data, array(
+			'touser'			=> '',
+			'template_id'		=> '',
+			'url'				=> '',
+			'miniprogram'		=> [],
+			'data'				=> [],
+		));
+		
+		// if($url){
+		// 	$data['url']	= $url;
+		// }
 
-		if($topcolor){
-			$data['topcolor']	= $topcolor;
-		}
+		// if($miniprogram){
+		// 	$data['miniprogram']	= $miniprogram;
+		// }
+
+		// if($topcolor){
+		// 	$data['topcolor']	= $topcolor;
+		// }
 
 		return $this->http_request('https://api.weixin.qq.com/cgi-bin/message/template/send', array(
 			'method'	=> 'post',

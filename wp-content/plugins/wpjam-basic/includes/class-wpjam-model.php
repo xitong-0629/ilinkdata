@@ -1589,7 +1589,7 @@ class WPJAM_Option{
 
 		unset($option[$key]);
 
-		$this->update_option($option);
+		return $this->update_option($option);
 	}
 
 	public function swap($key, $swap_key){
@@ -1643,8 +1643,8 @@ class WPJAM_Option{
 }
 
 class WPJAM_PostOption extends WPJAM_Option{
-	public function __construct($option_name, $primary_key='option_key'){
-		parent::__construct($option_name, $primary_key);
+	public function __construct($meta_key, $primary_key='option_key'){
+		parent::__construct($meta_key, $primary_key);
 	}
 
 	public function get_post_id(){
@@ -1660,17 +1660,74 @@ class WPJAM_PostOption extends WPJAM_Option{
 	}
 
 	public function get_option(){
-		$post_id		= $this->get_post_id();
-		$option_name	= $this->get_option_name();
-		$option			= get_post_meta($post_id, $option_name, true);
+		$post_id	= $this->get_post_id();
+		$meta_key	= $this->get_option_name();
 
-		return $this->parse_option($option);
+		if($this->get_primary_key() == 'meta_id'){
+			global $wpdb;
+			$results	= $wpdb->get_results( "SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE post_id = {$post_id} AND meta_key='{$meta_key}' ORDER BY meta_id DESC", ARRAY_A );
+
+			$values	= [];
+			if($results){
+				foreach ($results as $result) {
+					$value		= maybe_unserialize($result['meta_value']);
+					$meta_id	= $result['meta_id']; 
+
+					$values[$meta_id]	= $value;
+				}
+			}
+
+			return $values;
+		}else{
+			$option	= get_post_meta($post_id, $meta_key, true);
+
+			return $this->parse_option($option);
+		}
 	}
 
 	public function update_option($option){
-		$post_id		= $this->get_post_id();
-		$option_name	= $this->get_option_name();
+		$post_id	= $this->get_post_id();
+		$meta_key	= $this->get_option_name();
 
-		update_post_meta($post_id, $option_name, $option);	
+		update_post_meta($post_id, $meta_key, $option);	
+	}
+
+	public function get($key){
+		if($this->get_primary_key() == 'meta_id'){
+			$value	= get_metadata_by_mid('post', $key);
+			$meta_value	= $value->meta_value;
+
+			$meta_value['meta_id']	= $key;
+
+			return $meta_value;
+		}else{
+			return parent::get($key);
+		}
+	}
+
+	public function insert($data){
+		if($this->get_primary_key() == 'meta_id'){
+			$post_id	= $this->get_post_id();
+			$meta_key	= $this->get_option_name();
+			return add_post_meta($post_id, $meta_key, $data);
+		}else{
+			return parent::insert($data);
+		}
+	}
+
+	public function update($key, $data){
+		if($this->get_primary_key() == 'meta_id'){
+			return update_metadata_by_mid('post', $key, $data);
+		}else{
+			return parent::update($key, $data);
+		}
+	}
+
+	public function delete($key){
+		if($this->get_primary_key() == 'meta_id'){
+			return delete_metadata_by_mid('post', $key);
+		}else{
+			return parent::delete($key);
+		}
 	}
 }

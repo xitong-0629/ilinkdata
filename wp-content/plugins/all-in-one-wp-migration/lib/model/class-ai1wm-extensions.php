@@ -72,7 +72,7 @@ class Ai1wm_Extensions {
 			);
 		}
 
-		// Add DigitalOcean Extension
+		// Add DigitalOcean Spaces Extension
 		if ( defined( 'AI1WMIE_PLUGIN_NAME' ) ) {
 			$extensions[ AI1WMIE_PLUGIN_NAME ] = array(
 				'key'      => AI1WMIE_PLUGIN_KEY,
@@ -95,6 +95,19 @@ class Ai1wm_Extensions {
 				'version'  => AI1WMDE_VERSION,
 				'requires' => '3.32',
 				'short'    => AI1WMDE_PLUGIN_SHORT,
+			);
+		}
+
+		// Add File Extension
+		if ( defined( 'AI1WMTE_PLUGIN_NAME' ) ) {
+			$extensions[ AI1WMTE_PLUGIN_NAME ] = array(
+				'key'      => AI1WMTE_PLUGIN_KEY,
+				'title'    => AI1WMTE_PLUGIN_TITLE,
+				'about'    => AI1WMTE_PLUGIN_ABOUT,
+				'basename' => AI1WMTE_PLUGIN_BASENAME,
+				'version'  => AI1WMTE_VERSION,
+				'requires' => '1.0',
+				'short'    => AI1WMTE_PLUGIN_SHORT,
 			);
 		}
 
@@ -150,6 +163,19 @@ class Ai1wm_Extensions {
 			);
 		}
 
+		// Add WebDAV extension
+		if ( defined( 'AI1WMWE_PLUGIN_NAME' ) ) {
+			$extensions[ AI1WMWE_PLUGIN_NAME ] = array(
+				'key'      => AI1WMWE_PLUGIN_KEY,
+				'title'    => AI1WMWE_PLUGIN_TITLE,
+				'about'    => AI1WMWE_PLUGIN_ABOUT,
+				'basename' => AI1WMWE_PLUGIN_BASENAME,
+				'version'  => AI1WMWE_VERSION,
+				'requires' => '1.0',
+				'short'    => AI1WMWE_PLUGIN_SHORT,
+			);
+		}
+
 		// Add Mega Extension
 		if ( defined( 'AI1WMEE_PLUGIN_NAME' ) ) {
 			$extensions[ AI1WMEE_PLUGIN_NAME ] = array(
@@ -171,7 +197,7 @@ class Ai1wm_Extensions {
 				'about'    => AI1WMME_PLUGIN_ABOUT,
 				'basename' => AI1WMME_PLUGIN_BASENAME,
 				'version'  => AI1WMME_VERSION,
-				'requires' => '3.59',
+				'requires' => '3.60',
 				'short'    => AI1WMME_PLUGIN_SHORT,
 			);
 		}
@@ -223,7 +249,7 @@ class Ai1wm_Extensions {
 				'about'    => AI1WMUE_PLUGIN_ABOUT,
 				'basename' => AI1WMUE_PLUGIN_BASENAME,
 				'version'  => AI1WMUE_VERSION,
-				'requires' => '2.18',
+				'requires' => '2.19',
 				'short'    => AI1WMUE_PLUGIN_SHORT,
 			);
 		}

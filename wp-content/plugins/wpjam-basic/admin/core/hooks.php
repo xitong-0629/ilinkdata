@@ -79,8 +79,8 @@ add_action('admin_enqueue_scripts', function(){
 	wp_enqueue_script('wp-color-picker');
 
 	if($pagenow != 'plugins.php'){
-		wp_enqueue_script('wpjam-script',	WPJAM_BASIC_PLUGIN_URL.'/static/script.js', ['jquery']);
-		wp_enqueue_script('wpjam-form',		WPJAM_BASIC_PLUGIN_URL.'/static/form.js',   ['jquery']);
+		wp_enqueue_script('wpjam-script',	WPJAM_BASIC_PLUGIN_URL.'/static/script.js', ['jquery'], '', true);
+		wp_enqueue_script('wpjam-form',		WPJAM_BASIC_PLUGIN_URL.'/static/form.js',   ['jquery'], '', true);
 	}
 
 	global $plugin_page;

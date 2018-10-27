@@ -5,7 +5,7 @@ function wpjam_basic_about_page(){
 
 		<h1>关于WPJAM</h1>
 
-		<p><strong><a href="http://blog.wpjam.com/project/wpjam-basic/">WPJAM Basic</a></strong> 是 <strong><a href="http://blog.wpjam.com/">我爱水煮鱼</a></strong> 博主 Denis 开发的 WordPress 插件，WPJAM Basic 除了能够优化你的 WordPress ，也是 WordPress 果酱团队进行 WordPress 二次开发的基础。</p>
+		<p><strong><a href="http://blog.wpjam.com/project/wpjam-basic/">WPJAM Basic</a></strong> 是 <strong><a href="http://blog.wpjam.com/">我爱水煮鱼</a></strong>的 Denis 开发的 WordPress 插件，WPJAM Basic 除了能够优化你的 WordPress ，也是 WordPress 果酱团队进行 WordPress 二次开发的基础。</p>
 
 		<p>更详细的 WordPress 优化请参考：<a href="https://blog.wpjam.com/article/wordpress-performance/">WordPress 性能优化：为什么我的博客比你的快</a>，我们也提供专业的 <a href="https://blog.wpjam.com/article/wordpress-optimization/">WordPress 性能优化服务</a></p>
 
@@ -22,6 +22,7 @@ function wpjam_basic_about_page(){
 		<h2>其他问题</h2>
 
 		<p>使用过程有什么问题，请到 <strong><a href="http://97866.com/s/zsxq/">WordPress 果酱知识星球反馈或者提问</a></strong>。</p>
+		<p>如果你在商业站点使用 WPJAM Basic，需要去掉本页和讨论组，请联系微信号：「chenduopapa」获取授权。</p>
 
 	</div>
 

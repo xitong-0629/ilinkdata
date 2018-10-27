@@ -13,7 +13,7 @@ add_filter('wpjam_cdn_setting', function(){
 
 	$detail = '
 	<p>七牛云存储用户：充值可以使用WordPress插件用户专属的优惠码：“<span style="color:red; font-weight:bold;">d706b222</span>”，点击查看<strong><a title="如何使用七牛云存储的优惠码" class="thickbox" href="#TB_inline?width=600&height=480&inlineId=qiniu_coupon">详细使用指南</a></strong>。</p>
-	<p>阿里云OSS用户：请点击这里注册和申请<a href="http://wpjam.com/go/aliyun/" target="_blank">阿里云</a>可获得代金券。</p>
+	<p>阿里云OSS用户：请点击这里注册和申请<a href="http://wpjam.com/go/aliyun/" target="_blank">阿里云</a>可获得代金券，阿里云OSS<strong><a href="https://blog.wpjam.com/m/aliyun-oss-cdn/" target="_blank">详细使用指南</a></strong>。</p>
 	<p>腾讯云COS用户：请点击这里注册和申请<a href="http://wpjam.com/go/qcloud/" target="_blank">腾讯云</a>可获得优惠券。</p>
 	'
 	.$coupon_div;
@@ -41,12 +41,6 @@ add_filter('wpjam_cdn_setting', function(){
 		'quality'	=> ['title'=>'图片质量',	'type'=>'number',	'class'=>'all-options',	'description'=>'<br />1-100之间图片质量，七牛默认为75。','mim'=>0,'max'=>100]
 	];
 
-	$thumb_fields = [
-		'use_first'	=> ['title'=>'使用第一张图',	'type'=>'checkbox',	'description'=>'如果文章没有设置特色图片的情况下，使用文章内容中的第一张图片作为缩略图！'],
-		'default'	=> ['title'=>'默认缩略图',	'type'=>'image',	'description'=>'各种情况都找不到缩略图之后默认的缩略图，可以填本地或者云存储的地址！'],
-		'width'		=> ['title'=>'图片最大宽度',	'type'=>'number',	'class'=>'all-options',	'description'=>'<br />设置博客文章内容中图片的最大宽度，插件会使用将图片缩放到对应宽度，节约流量和加快网站速度加载。'],
-	];
-
 	$watermark_options = [
 		'SouthEast'	=> '右下角',
 		'SouthWest'	=> '左下角',
@@ -69,29 +63,20 @@ add_filter('wpjam_cdn_setting', function(){
 
 	$sections = [];
 	
-	$sections['cdn']		= ['title'=>'CDN设置',		'fields'=>$cdn_fields];
+	$sections['cdn']		= ['title'=>'CDN设置',		'fields'=>$cdn_fields,		'summary'=>'<p>*使用之前，请一定认真阅读 WPJAM Basic 的<a href="https://blog.wpjam.com/m/wpjam-basic-cdn/" target="_blank">CDN 加速的使用说明</a>，这里几乎可以解决你所有的问题。</p>'];
 	$sections['local']		= ['title'=>'本地设置',		'fields'=>$local_fields];
-	$sections['thumb']		= ['title'=>'缩略图设置',		'fields'=>$thumb_fields,	'summary'=>'<p>*请使用 <a href="https://blog.wpjam.com/m/wpjam-basic-thumbnail-functions/">WPJAM 的相关缩略图</a>函数代替 WordPress 自带的缩略图函数，下面的设置才能生效。</p>'];
 	$sections['remote']		= ['title'=>'远程图片设置',	'fields'=>$remote_fields,	'summary'=>'<p>*自动将远程图片镜像到云存储需要你的博客支持固定链接。<br />*如果前面设置的静态文件域名和博客域名不一致，该功能也可能出问题。<br />*远程 GIF 图片保存到云存储将失去动画效果，所以目前不支持 GIF 图片。</p>'];
 	$sections['image']		= ['title'=>'图片设置',		'fields'=>$image_fields];
 	$sections['watermark']	= ['title'=>'水印设置',		'fields'=>$watermark_fields];
 	
 
 	if(is_network_admin()){
-		unset($sections['thumb']);
 		unset($sections['local']['fields']['local']);
 		unset($sections['watermark']['fields']['watermark']);
 	}
 
 	$field_validate	= function($value){
 		flush_rewrite_rules();
-
-		if(is_multisite() && is_network_admin()){
-			delete_site_option('wpjam-qiniutek');
-		}else{
-			delete_option('wpjam-qiniutek');
-		}
-
 		return $value;
 	};
 

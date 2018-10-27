@@ -41,14 +41,18 @@ add_action('wp_loaded', function(){	// HTML 替换，镜像 CDN 主函数
 			return wpjam_cdn_replace_local_hosts($img_url);
 		}, 10, 2);
 
-		include(WPJAM_BASIC_PLUGIN_DIR.'extends/cdn/'.CDN_NAME.'.php');
+		$cdn_extend = apply_filters('wpjam_cdn_extend', WPJAM_BASIC_PLUGIN_DIR.'extends/cdn/'.CDN_NAME.'.php', CDN_NAME);
+
+		if(file_exists($cdn_extend)){
+			include($cdn_extend);
+		}
 
 		add_filter('the_content', function($content){
-			$content = wpjam_cdn_replace_local_hosts($content);
+			$content = wpjam_cdn_replace_local_hosts($content,false);
 			return WPJAM_Thumbnail::content_images($content);
 		}, 1);
 
-		add_filter('wp_resource_hints', function ($urls, $relation_type){
+		add_filter('wp_resource_hints', function($urls, $relation_type){
 			if($relation_type == 'dns-prefetch'){
 				$urls[]	= CDN_HOST;
 			}
@@ -56,66 +60,59 @@ add_action('wp_loaded', function(){	// HTML 替换，镜像 CDN 主函数
 		}, 10, 2);
 	
 		if(WPJAM_Thumbnail::can_remote_image()){
-
 			// 远程图片的 Rewrite 规则，第三方插件需要 flush rewrite
 			add_filter('wpjam_rewrite_rules', function ($rules){
-				$rules[CDN_NAME.'/([^/]+)/image/([^/]+)\.([^/]+)?$']	= 'index.php?p=$matches[1]&'.CDN_NAME.'_image=$matches[2]&'.CDN_NAME.'_image_type=$matches[3]';	
+				$rules[CDN_NAME.'/([0-9]+)/image/([^/]+)?$']	= 'index.php?p=$matches[1]&'.CDN_NAME.'=$matches[2]';
 				return $rules;
 			});
 
 			// 远程图片的 Query Var
-			add_filter('query_vars', function ($query_vars) {
-				$query_vars[] = CDN_NAME.'_image';
-				$query_vars[] = CDN_NAME.'_image_type';
+			add_filter('query_vars', function($query_vars) {
+				$query_vars[] = CDN_NAME;
 				return $query_vars;
 			});
 
 			// 远程图片加载模板
-			add_action('template_redirect',		function (){
-				$remote_image 		= get_query_var(CDN_NAME.'_image');
-				$remote_image_type 	= get_query_var(CDN_NAME.'_image_type');
-
-				if($remote_image && $remote_image_type){
+			add_action('template_redirect',	function(){
+				if(get_query_var(CDN_NAME)){
 					include(WPJAM_BASIC_PLUGIN_DIR.'template/image.php');
 					exit;
 				}
 			}, 5);
 		}
 	}
+	
+	ob_start(function ($html){
+		$html = apply_filters('wpjam_html_replace',$html);
 
-	global $mq_blog_id;
-	if(empty($mq_blog_id)){
-		ob_start(function ($html){
-			$html = apply_filters('wpjam_html_replace',$html);
-
-			if(is_admin() || empty(CDN_NAME)){
-				return $html;
-			}
-
-			$html		= wpjam_cdn_replace_local_hosts($html, false);
-
-			$cdn_exts	= wpjam_cdn_get_setting('exts');
-
-			if($cdn_exts){
-				if($cdn_dirs = wpjam_cdn_get_setting('dirs')){
-					$cdn_dirs	= str_replace(['-','/'],['\-','\/'], $cdn_dirs);
-
-					$regex	=  '/'.str_replace('/','\/',LOCAL_HOST).'\/(('.$cdn_dirs.')\/[^\s\?\\\'\"\;\>\<]{1,}.('.$cdn_exts.'))([\"\\\'\s\]\?]{1})/';
-					$html	=  preg_replace($regex, CDN_HOST.'/$1$4', $html);
-				}else{
-					$regex	= '/'.str_replace('/','\/',LOCAL_HOST).'\/([^\s\?\\\'\"\;\>\<]{1,}.('.$cdn_exts.'))([\"\\\'\s\]\?]{1})/';
-					$html	=  preg_replace($regex, CDN_HOST.'/$1$3', $html);
-				}
-			}	
-
+		if(is_admin() || empty(CDN_NAME)){
 			return $html;
-		});
-	}
+		}
+
+		$html		= wpjam_cdn_replace_local_hosts($html, false);
+
+		$cdn_exts	= wpjam_cdn_get_setting('exts');
+
+		if($cdn_exts){
+			if($cdn_dirs = wpjam_cdn_get_setting('dirs')){
+				$cdn_dirs	= str_replace(['-','/'],['\-','\/'], $cdn_dirs);
+
+				$regex	=  '/'.str_replace('/','\/',LOCAL_HOST).'\/(('.$cdn_dirs.')\/[^\s\?\\\'\"\;\>\<]{1,}.('.$cdn_exts.'))([\"\\\'\s\]\?]{1})/';
+				$html	=  preg_replace($regex, CDN_HOST.'/$1$4', $html);
+			}else{
+				$regex	= '/'.str_replace('/','\/',LOCAL_HOST).'\/([^\s\?\\\'\"\;\>\<]{1,}.('.$cdn_exts.'))([\"\\\'\s\]\?]{1})/';
+				$html	=  preg_replace($regex, CDN_HOST.'/$1$3', $html);
+			}
+		}	
+
+		return $html;
+	});
+	
 });
 
 // 很多客户端不支持中文图片名
 add_filter('wp_get_attachment_url', function($url){
-	return is_admin()?$url:wpjam_urlencode_img_cn_name($url);
+	return is_admin() ? $url : wpjam_urlencode_img_cn_name($url);
 });
 
 add_filter('wp_update_attachment_metadata', function ($data){
@@ -125,8 +122,6 @@ add_filter('wp_update_attachment_metadata', function ($data){
 
     return $data;
 });
-
-
 
 function wpjam_cdn_replace_local_hosts($html, $to_cdn=true){
 	$local_hosts	= wpjam_cdn_get_setting('locals') ?: [];
@@ -165,7 +160,7 @@ function wpjam_parse_size($size){
 }
 
 function wpjam_content_images($content, $max_width=750){
-	$content = wpjam_cdn_replace_local_hosts($content);
+	$content = wpjam_cdn_replace_local_hosts($content, false);
 	return WPJAM_Thumbnail::content_images($content, $max_width);
 }
 

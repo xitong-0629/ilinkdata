@@ -4,7 +4,7 @@ Tags: move, transfer, copy, migrate, backup, clone, restore, db migration, wordp
 Requires at least: 3.3
 Tested up to: 4.9
 Requires PHP: 5.2.17
-Stable tag: 6.77
+Stable tag: 6.78
 License: GPLv2 or later
 
 Move, transfer, copy, migrate, and backup a site with 1-click. Quick, easy, and reliable.
@@ -33,7 +33,7 @@ Mobile device compatible: All in One WP Plugin is the first plugin to offer true
 = Compatible with WordPress v3.3 to present =
 * We have a comprehensive Quality Assurance and testing process that ensures that the plugin is always compatible with the latest release of WordPress, but we don't support versions of WordPress prior to version 3.3 (2012)
 
-= WP-CLI Integration is included =
+= WP-CLI Integration is available in Unlimited Extension =
 * [WP-CLI Integration Documentation](https://help.servmask.com/knowledgebase/cli-integration/)
 
 = Support =
@@ -44,6 +44,7 @@ Mobile device compatible: All in One WP Plugin is the first plugin to offer true
 = Migrate WordPress to cloud storage services using our completely new premium extensions =
 **All of the Cloud Storage and Multisite extensions include premium support and the Unlimited extension free of charge**
 
+* [File](https://import.wp-migration.com)
 * [Unlimited](https://servmask.com/products/unlimited-extension)
 * [Dropbox](https://servmask.com/products/dropbox-extension)
 * [Multisite](https://servmask.com/products/multisite-extension)
@@ -60,6 +61,7 @@ Mobile device compatible: All in One WP Plugin is the first plugin to offer true
 * [Microsoft Azure Storage](https://servmask.com/products/microsoft-azure-storage-extension)
 * [Amazon Glacier](https://servmask.com/products/amazon-glacier-extension)
 * [pCloud](https://servmask.com/products/pcloud-extension)
+* [WebDAV](https://servmask.com/products/webdav-extension)
 
 = Supported hosting providers =
 **The plugin does not have any dependencies, making it compatible with all PHP hosting providers. We support a vast range of hosting providers. Some of the most popular include:**
@@ -105,6 +107,19 @@ Alternatively you can download the plugin using the download button on this page
 All-in-One WP Migration **asks for your consent** to collect **requester's email address** when filling plugin's contact form. [GDPR Compliant Privacy Policy](https://www.iubenda.com/privacy-policy/946881)
 
 == Changelog ==
+= 6.78 =
+**Added**
+
+* Support for WebDAV
+* Support for Muffin Builder 2.0
+* Display processed database records on large tables
+
+**Removed**
+
+* File import has been moved to its own free extension
+* WP CLI support is now in Unlimited Extension
+* Restore a backup is now in Unlimited Extension
+
 = 6.77 =
 **Added**
 

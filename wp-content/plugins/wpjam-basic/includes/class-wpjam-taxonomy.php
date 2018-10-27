@@ -89,7 +89,10 @@ class WPJAM_Taxonomy{
 
 		$term_json['id']			= $term_id;
 		$term_json['name']			= $term->name;
-		// $term_json['slug']			= $term->slug;
+
+		if(get_taxonomy($taxonomy)->public || get_taxonomy($taxonomy)->publicly_queryable){
+			$term_json['slug']		= $term->slug;
+		}
 		$term_json['count']			= (int)$term->count;
 		$term_json['description']	= $term->description;
 		$term_json['parent']		= $term->parent;

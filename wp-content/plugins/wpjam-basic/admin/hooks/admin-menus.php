@@ -6,9 +6,9 @@ function wpjam_basic_admin_pages($wpjam_pages){
 	$capability	= (is_multisite())?'manage_site':'manage_options';
 	$subs		= [];
 
-	if(!WPJAM_Verify::verify()){
-		
+	$verified	= WPJAM_Verify::verify();
 
+	if(!$verified){
 		$subs['wpjam-basic']	= [
 			'menu_title'	=> '验证WPJAM',	
 			'function'		=> 'wpjam_verify_page',
@@ -48,6 +48,13 @@ function wpjam_basic_admin_pages($wpjam_pages){
 		'menu_title'	=> 'CDN加速', 
 		'function'		=> 'option',
 		'page_file'		=> WPJAM_BASIC_PLUGIN_DIR.'admin/pages/wpjam-cdn.php'
+	];
+
+	$subs['wpjam-thumbnail']	= [
+		'menu_title'	=> '缩略图设置', 
+		'function'		=> 'option',
+		'option_name'	=> 'wpjam-cdn',
+		'page_file'		=> WPJAM_BASIC_PLUGIN_DIR.'admin/pages/wpjam-thumbnail.php'
 	];
 
 	$subs = apply_filters('wpjam_basic_sub_pages', $subs);
@@ -104,11 +111,13 @@ function wpjam_basic_admin_pages($wpjam_pages){
 		'page_file'		=> WPJAM_BASIC_PLUGIN_DIR.'admin/pages/wpjam-extends.php'
 	];
 
-	$subs['wpjam-about']	= [
-		'menu_title'	=> '关于WPJAM',	
-		'function'		=> 'wpjam_basic_about_page',	
-		'page_file'		=> WPJAM_BASIC_PLUGIN_DIR.'admin/pages/wpjam-about.php'
-	];
+	if($verified !== 'verified'){
+		$subs['wpjam-about']	= [
+			'menu_title'	=> '关于WPJAM',	
+			'function'		=> 'wpjam_basic_about_page',	
+			'page_file'		=> WPJAM_BASIC_PLUGIN_DIR.'admin/pages/wpjam-about.php'
+		];
+	}
 
 	$wpjam_pages['wpjam-basic']	= [
 		'menu_title'	=> 'WPJAM',	
@@ -117,6 +126,10 @@ function wpjam_basic_admin_pages($wpjam_pages){
 		'function'		=> 'option',	
 		'subs'			=> $subs
 	];
+
+	if($verified === 'verified'){
+		return $wpjam_pages;
+	}
 
 	if(is_multisite() && is_network_admin()){
 		// $wpjam_pages['settings']['subs']['db-optimize']		= array('menu_title'=>'数据库优化',	'function'=>'wpjam_db_optimize_page', 'capability'=>$capability);

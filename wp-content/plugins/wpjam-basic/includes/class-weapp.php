@@ -150,7 +150,7 @@ class WEAPP{
 		$decrypted_data	= substr($decrypted_data, 0, (strlen($decrypted_data) - $pad));
 
 		if (strlen($decrypted_data) < 16)	{
-			return new WP_Error('illegal_decrypted_length', '非法解密数据长度');
+			// return new WP_Error('illegal_decrypted_length', '非法解密数据长度');
 		}
 
 		$decrypted_data	= wpjam_json_decode($decrypted_data);

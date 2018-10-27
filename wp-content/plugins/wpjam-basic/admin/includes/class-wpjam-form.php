@@ -341,7 +341,7 @@ class WPJAM_Form{
 						$i++;
 					}
 
-					$field_html = '<div id="'.$key.'_options">'.$field_html.'</div>';
+					$field_html = '<div id="'.$key.'_options">'.$field_html.'</div>'.$description;
 				}else{
 					$extra		.= checked('1', $value, false);
 					$field_html	= self::get_input_field_html($type, $name, $key, $class, '1', $extra, $description);

@@ -44,11 +44,11 @@ function wpjam_get_qiniu_thumbnail($img_url, $args=array()){
 		if($interlace)	$arg .= '/interlace/'.$interlace;
 		if($quality)	$arg .= '/q/'.$quality;
 
-		if(strpos($img_url, 'imageView2')){
+		if(strpos($img_url, 'imageView2/')){
 			$img_url	= preg_replace('/imageView2\/(.*?)#/', '', $img_url);
 		}
 
-		if(strpos($img_url, 'watermark')){
+		if(strpos($img_url, 'watermark/')){
 			$img_url	= $img_url.'|'.$arg;
 		}else{
 			$img_url	= add_query_arg( array($arg => ''), $img_url );

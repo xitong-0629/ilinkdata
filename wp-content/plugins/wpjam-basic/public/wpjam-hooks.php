@@ -341,7 +341,11 @@ add_filter('pre_option_category_base',function($value){
 	if(wpjam_basic_get_setting('no_category_base')){ 
 		return '.';
 	}else{
-		return $value;
+		if($value == '.'){
+			return 'category';
+		}else{
+			return $value;
+		}
 	}
 });
 

@@ -1,34 +1,79 @@
 <?php
-function wpjam_get_related_posts_query($post_id=null, $number=5){
-	return WPJAM_PostType::related_query($post_id, $number);
+// WP_Query 缓存
+function wpjam_query($args=[], $cache_time='600'){
+	return WPJAM_Cache::query($args, $cache_time);
 }
 
-function wpjam_related_posts($number=5, $args){
-	$post_id	= get_the_ID();
-
-	$related_query	= WPJAM_PostType::related_query($post_id, $number);
-
-	// wpjam_print_r($related_query);
-	// $related_query->posts	= array_filter($related_query->posts, function($related_post) use ($post_id){ return $related_post->ID != $post_id; });
-	echo wpjam_get_post_list($related_query,$args);
+function wpjam_validate_post($post_id, $post_type='', $action=''){
+	return WPJAM_PostType::validate($post_id, $post_type, $action);
 }
 
-
-function wpjam_get_new_posts($number=5, $args = array()){
-	return wpjam_get_post_list(wpjam_query(array(
-		'post_type'		=>($args['post_type'])??'post', 
-		'posts_per_page'=>$number, 
-		'orderby'		=>$args['orderby']??'date', 
-	)), $args);
+function wpjam_get_post($post_id, $args=[]){
+	return WPJAM_PostType::parse_for_json($post_id, $args);
 }
 
-function wpjam_new_posts($number=5, $args= array()){
-	if($output = wpjam_get_new_posts($number, $args)){
-		echo $output;
+function wpjam_get_posts($post_ids, $args=[]){
+	if(class_exists('WPJAM_PostType')){
+		return WPJAM_PostType::get_posts($post_ids, $args);
+	}else{
+		return [];
 	}
 }
 
-function wpjam_get_top_viewd_posts($number=5, $args = array()){
+function wpjam_get_post_views($post_id, $type='views'){
+	return WPJAM_PostType::get_views($post_id, $type);
+}
+
+function wpjam_update_post_views($post_id, $type='views'){
+	return WPJAM_PostType::update_views($post_id, $type);
+}
+
+function wpjam_get_post_excerpt($post=null, $excerpt_length=240){
+	return WPJAM_PostType::get_excerpt($post, $excerpt_length);
+}
+	
+if(!function_exists('get_post_excerpt')){   
+	//获取日志摘要
+	function get_post_excerpt($post=null, $excerpt_length=240){
+		return WPJAM_PostType::get_excerpt($post, $excerpt_length);
+	}
+}
+
+function wpjam_get_related_posts_query($number=5, $post_type=null){
+	return WPJAM_PostType::related_query($number, $post_type);
+}
+
+function wpjam_related_posts($args=[]){
+	echo wpjam_get_related_posts($args);
+}
+
+function wpjam_get_related_posts($args=[]){
+	$args	= apply_filters('wpjam_related_posts_args', $args);
+
+	$post_type	= $args['post_type'] ?? null;
+	$number		= $args['number'] ?? null;
+
+	$related_query	= WPJAM_PostType::related_query($number, $post_type);
+	$related_posts	= WPJAM_PostType::parse_post_list($related_query, $args);
+
+	return $related_posts;
+}
+
+function wpjam_get_new_posts($args=[]){
+	$wpjam_query	= wpjam_query(array(
+		'posts_per_page'=> $args['number'] ?? 5, 
+		'post_type'		=> $args['post_type'] ?? 'post', 
+		'orderby'		=> $args['orderby'] ?? 'date', 
+	));
+
+	return WPJAM_PostType::parse_post_list($wpjam_query, $args);
+}
+
+function wpjam_new_posts($args=[]){
+	echo wpjam_get_new_posts($args);
+}
+
+function wpjam_get_top_viewd_posts($args=[]){
 	$date_query	= array();
 
 	if(isset($args['days'])){
@@ -38,67 +83,35 @@ function wpjam_get_top_viewd_posts($number=5, $args = array()){
 		));
 	}
 
-	return wpjam_get_post_list(wpjam_query(array(
-		'post_type'		=>$args['post_type']??array('post'), 
-		'posts_per_page'=>$number, 
-		'orderby'		=>'meta_value_num', 
-		'meta_key'		=>'views', 
-		'date_query'	=>$date_query 
-	)), $args);
+	$wpjam_query	= wpjam_query(array(
+		'posts_per_page'=> $args['number'] ?? 5, 
+		'post_type'		=> $args['post_type']??['post'], 
+		'orderby'		=> 'meta_value_num', 
+		'meta_key'		=> 'views', 
+		'date_query'	=> $date_query 
+	));
+
+	return WPJAM_PostType::parse_post_list($wpjam_query, $args);
 }
 
-function wpjam_top_viewd_posts($number=5, $args= array()){
-	if($output = wpjam_get_top_viewd_posts($number, $args)){
-		echo $output;
-	}
+function wpjam_top_viewd_posts($args=[]){
+	echo wpjam_get_top_viewd_posts($args);
 }
 
-function wpjam_get_post_list($wpjam_query, $args){
-	extract(wp_parse_args($args, array(
-		'class'			=> '', 
-		'thumb'			=> true,	
-		'excerpt'		=> false, 
-		'size'			=> 'thumbnail', 
-		'crop'			=> true, 
-		'thumb_class'	=> 'wp-post-image',
-	)));
+function wpjam_get_post_list($wpjam_query, $args=[]){
+	return WPJAM_PostType::parse_post_list($wpjam_query, $args);
+}
 
-	if($thumb)			$class		= $class.' has-thumb';
-	if($class)			$class		= ' class="'.$class.'"';
-	if(is_singular())	$post_id	= get_the_ID();
+function wpjam_get_term($term, $taxonomy, $children_terms=[], $max_depth=-1, $depth=0){
+	return WPJAM_Taxonomy::get_term($term, $taxonomy, $children_terms, $max_depth, $depth);
+}
 
-	$output = '';
-	$i = 0;
-
-	if($wpjam_query->have_posts()){
-		while($wpjam_query->have_posts()){
-			$wpjam_query->the_post();
-
-			$li = '';
-
-			if($thumb){ 
-				$li .=	wpjam_get_post_thumbnail(null, $size, $crop, $thumb_class)."\n";		
-				$li .=	'<h4>'.get_the_title().'</h4>';
-			}else{
-				$li .= get_the_title();
-			}
-
-			if($excerpt){
-				$li .= '<p>'.get_the_excerpt().'</p>';
-			}
-
-			if(!is_singular() || (is_singular() && $post_id != get_the_ID())) {
-				$li =	'<a href="'.get_permalink().'" title="'.the_title_attribute(array('echo'=>false)).'">'.$li.'</a>';
-			}
-			$output .=	'<li>'.$li.'</li>'."\n";
-		}
-
-		$output = '<ul'.$class.'>'."\n".$output.'</ul>'."\n";
-
-	}else{
-		$output = false;
-	}
-
-	wp_reset_postdata();
-	return $output;	
+/**
+ * $max_depth = -1 means flatly display every element.
+ * $max_depth = 0 means display all levels.
+ * $max_depth > 0 specifies the number of display levels.
+ *
+ */
+function wpjam_get_terms($args, $max_depth=-1){
+	return WPJAM_Taxonomy::get_terms($args, $max_depth);
 }

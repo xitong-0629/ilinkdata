@@ -92,7 +92,7 @@ function wpjam_get_toc(){
 	}
 
 	if(wpjam_basic_get_setting('toc_copyright')){
-		$index .= '<a href="http://blog.wpjam.com/project/wpjam-toc/"><small>WPJAM TOC</small></a>'."\n";
+		$index .= '<a href="http://blog.wpjam.com/project/wpjam-basic/"><small>WPJAM TOC</small></a>'."\n";
 	}
 
 	$index = '<div id="toc-container">'."\n".'<div id="toc">'."\n\n".'<strong>文章目录</strong><span>[隐藏]</span>'."\n".$index.'</div>'."\n".'</div>'."\n";
